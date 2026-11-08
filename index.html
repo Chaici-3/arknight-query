@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e1014">
+  <title>卫戍协议 · 干员查询</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%230e1014'/%3E%3Cpath d='M25 72V28h12l26 28V28' stroke='%23f0b85c' stroke-width='8' fill='none'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #0e1014;
+      --panel: #171b22;
+      --panel-2: #1d222b;
+      --line: #2a303b;
+      --text: #eceef2;
+      --muted: #98a1b0;
+      --accent: #f0b85c;
+      --accent-soft: #3a3020;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      background-image: radial-gradient(1100px 420px at 50% -160px, #1b2230 0%, rgba(14, 16, 20, 0) 72%);
+      background-repeat: no-repeat;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* ---------- 头部 ---------- */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+      padding: 10px 16px 12px;
+      padding-top: calc(10px + env(safe-area-inset-top));
+    }
+
+    .header-inner {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    .brand::before {
+      content: "";
+      width: 4px;
+      height: 15px;
+      border-radius: 2px;
+      background: var(--accent);
+      flex: none;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+    }
+
+    /* ---------- 搜索框 ---------- */
+    .search-wrap {
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      width: 19px;
+      height: 19px;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      display: block;
+    }
+
+    #search {
+      width: 100%;
+      height: 48px;
+      padding: 0 14px 0 43px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 16px; /* ≥16px 防止 iOS 聚焦时自动放大 */
+      font-family: inherit;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    #search::placeholder {
+      color: #6f7887;
+    }
+
+    #search:focus {
+      border-color: var(--accent);
+      background: var(--panel-2);
+    }
+
+    #search::-webkit-search-cancel-button {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      margin-right: 2px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2398a1b0' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center / 18px 18px no-repeat;
+      cursor: pointer;
+    }
+
+    /* ---------- 阶数筛选 ---------- */
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .filters::-webkit-scrollbar { display: none; }
+
+    .filter {
+      flex: none;
+      height: 36px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 13.5px;
+      font-weight: 600;
+      font-family: inherit;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .filter:active { transform: scale(0.97); }
+
+    .filter[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #1a1408;
+    }
+
+    /* ---------- 结果区 ---------- */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 12px 16px calc(24px + env(safe-area-inset-bottom));
+    }
+
+    .status {
+      font-size: 12.5px;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      padding: 2px 2px 10px;
+    }
+
+    .status strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    @media (min-width: 720px) {
+      .cards { grid-template-columns: 1fr 1fr; gap: 12px; }
+    }
+
+    /* ---------- 卡片 ---------- */
+    .card {
+      --tier-color: #8ab4ff;
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--tier-color);
+      border-radius: var(--radius);
+      padding: 14px 15px 13px;
+      overflow: hidden;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .name {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.25;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      word-break: break-word;
+    }
+
+    .tier {
+      flex: none;
+      margin-left: auto;
+      padding: 2px 9px;
+      border: 1px solid var(--tier-color);
+      border-radius: 6px;
+      color: var(--tier-color);
+      background: var(--panel-2);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.5;
+      letter-spacing: 0.04em;
+    }
+
+    .tier--I    { --tier-color: #8ab4ff; }
+    .tier--II   { --tier-color: #7fd8bd; }
+    .tier--III  { --tier-color: #f0c674; }
+    .tier--IV   { --tier-color: #f59b6b; }
+    .tier--V    { --tier-color: #e78ab6; }
+    .tier--VI   { --tier-color: #b79cff; }
+
+    .price-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 7px;
+    }
+
+    .price-label {
+      font-size: 11px;
+      color: #6f7887;
+      letter-spacing: 0.08em;
+    }
+
+    .price {
+      padding: 1px 7px;
+      border-radius: 5px;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.6;
+    }
+
+    .price b {
+      color: var(--accent);
+      font-weight: 700;
+      margin-left: 3px;
+    }
+
+    .trait-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 11px;
+      padding-top: 11px;
+      border-top: 1px solid var(--line);
+    }
+
+    .section-label {
+      flex: none;
+      margin-top: 3px;
+      font-size: 11px;
+      color: #6f7887;
+      letter-spacing: 0.08em;
+    }
+
+    .traits {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .trait {
+      padding: 1px 8px;
+      border-radius: 5px;
+      background: var(--accent-soft);
+      color: #f3cf96;
+      font-size: 12.5px;
+      line-height: 1.6;
+      font-weight: 500;
+    }
+
+    .notes {
+      margin-top: 11px;
+      padding-top: 11px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+    }
+
+    .note {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .note-tag {
+      flex: none;
+      margin-top: 1px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      line-height: 1.6;
+      letter-spacing: 0.04em;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .note-tag--elite {
+      border-color: #4a3d24;
+      color: #d9b477;
+    }
+
+    .note-text {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.65;
+      color: #aab3c1;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    /* ---------- 空状态 ---------- */
+    .empty {
+      text-align: center;
+      padding: 64px 20px;
+      color: var(--muted);
+    }
+
+    .empty-title {
+      margin: 0 0 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .empty-hint {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .empty-hint kbd {
+      padding: 1px 6px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--panel);
+      font-family: inherit;
+      font-size: 12px;
+    }
+
+    [hidden] { display: none !important; }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">卫戍协议 · 干员查询<span class="brand-sub">明日方舟</span></div>
+
+      <div class="search-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="M16.5 16.5L21 21"></path>
+        </svg>
+        <input
+          id="search"
+          type="search"
+          inputmode="search"
+          enterkeyhint="search"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="搜索干员 / 特性 / 说明 / 售价…"
+          aria-label="搜索干员数据">
+      </div>
+
+      <nav class="filters" id="filters" aria-label="阶数筛选">
+        <button class="filter" type="button" data-tier="" aria-pressed="true">全部</button>
+        <button class="filter" type="button" data-tier="I" aria-pressed="false">I阶</button>
+        <button class="filter" type="button" data-tier="II" aria-pressed="false">II阶</button>
+        <button class="filter" type="button" data-tier="III" aria-pressed="false">III阶</button>
+        <button class="filter" type="button" data-tier="IV" aria-pressed="false">IV阶</button>
+        <button class="filter" type="button" data-tier="V" aria-pressed="false">V阶</button>
+        <button class="filter" type="button" data-tier="VI" aria-pressed="false">VI阶</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="status" id="status" role="status" aria-live="polite">正在加载数据…</div>
+    <div class="cards" id="list"></div>
+    <div class="empty" id="empty" hidden>
+      <p class="empty-title">未找到匹配内容</p>
+      <p class="empty-hint">试试其他关键词（如 <kbd>乌萨斯</kbd>、<kbd>技力</kbd>），或切换阶数筛选。</p>
+    </div>
+    <noscript>
+      <div class="empty">
+        <p class="empty-title">需要启用 JavaScript</p>
+        <p class="empty-hint">本页面依赖 JavaScript 读取 data.json 并展示数据。</p>
+      </div>
+    </noscript>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var ITEM_FIELDS = [
+        "干员名称",
+        "阶数",
+        "特性",
+        "特殊说明（普通）",
+        "特殊说明（精锐）",
+        "普通售价",
+        "精锐售价"
+      ];
+
+      var state = {
+        items: [],
+        query: "",
+        tier: ""
+      };
+
+      var searchEl = document.getElementById("search");
+      var filtersEl = document.getElementById("filters");
+      var listEl = document.getElementById("list");
+      var emptyEl = document.getElementById("empty");
+      var statusEl = document.getElementById("status");
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function valueOf(item, key, fallback) {
+        var value = item[key];
+        if (value === undefined || value === null || value === "") return fallback;
+        return String(value);
+      }
+
+      function tierClass(tier) {
+        var safe = String(tier || "").replace(/[^IVX]/g, "");
+        return safe ? "tier--" + safe : "";
+      }
+
+      function cardHtml(item) {
+        var name = escapeHtml(valueOf(item, "干员名称", "未知干员"));
+        var tier = valueOf(item, "阶数", "—");
+        var normalPrice = escapeHtml(valueOf(item, "普通售价", "—"));
+        var elitePrice = escapeHtml(valueOf(item, "精锐售价", "—"));
+        var normalNote = escapeHtml(valueOf(item, "特殊说明（普通）", "—"));
+        var eliteNote = escapeHtml(valueOf(item, "特殊说明（精锐）", "—"));
+
+        var traits = String(valueOf(item, "特性", ""))
+          .split("/")
+          .map(function (t) { return t.trim(); })
+          .filter(Boolean)
+          .map(function (t) { return '<span class="trait">' + escapeHtml(t) + "</span>"; })
+          .join("");
+
+        if (!traits) traits = '<span class="trait">—</span>';
+
+        return (
+          '<article class="card ' + tierClass(tier) + '">' +
+            '<div class="card-top">' +
+              '<h2 class="name">' + name + "</h2>" +
+              '<span class="tier">' + escapeHtml(tier) + " 阶</span>" +
+            "</div>" +
+            '<div class="price-row">' +
+              '<span class="price-label">售价</span>' +
+              '<span class="price">普通<b>' + normalPrice + "</b></span>" +
+              '<span class="price">精锐<b>' + elitePrice + "</b></span>" +
+            "</div>" +
+            '<div class="trait-row">' +
+              '<span class="section-label">特性</span>' +
+              '<div class="traits">' + traits + "</div>" +
+            "</div>" +
+            '<div class="notes">' +
+              '<div class="note">' +
+                '<span class="note-tag">普通</span>' +
+                '<p class="note-text">' + normalNote + "</p>" +
+              "</div>" +
+              '<div class="note">' +
+                '<span class="note-tag note-tag--elite">精锐</span>' +
+                '<p class="note-text">' + eliteNote + "</p>" +
+              "</div>" +
+            "</div>" +
+          "</article>"
+        );
+      }
+
+      function render() {
+        var query = state.query;
+        var tier = state.tier;
+        var matched = state.items.filter(function (item) {
+          if (tier && valueOf(item, "阶数", "") !== tier) return false;
+          if (!query) return true;
+          return item.__search.indexOf(query) !== -1;
+        });
+
+        listEl.innerHTML = matched.map(cardHtml).join("");
+        emptyEl.hidden = matched.length > 0;
+        listEl.hidden = matched.length === 0;
+
+        var scopeText = query || tier ? "找到" : "共";
+        statusEl.innerHTML =
+          scopeText + " <strong>" + matched.length + "</strong> 名干员" +
+          (tier ? "（" + escapeHtml(tier) + " 阶）" : "");
+      }
+
+      function setTier(tier) {
+        state.tier = tier;
+        Array.prototype.forEach.call(filtersEl.querySelectorAll(".filter"), function (btn) {
+          btn.setAttribute("aria-pressed", btn.getAttribute("data-tier") === tier ? "true" : "false");
+        });
+        render();
+      }
+
+      searchEl.addEventListener("input", function (event) {
+        state.query = String(event.target.value || "").trim().toLowerCase();
+        render();
+      });
+
+      filtersEl.addEventListener("click", function (event) {
+        var btn = event.target.closest(".filter");
+        if (!btn) return;
+        var tier = btn.getAttribute("data-tier") || "";
+        setTier(tier === state.tier ? "" : tier);
+      });
+
+      fetch("./data.json")
+        .then(function (response) {
+          if (!response.ok) throw new Error("HTTP " + response.status);
+          return response.json();
+        })
+        .then(function (data) {
+          if (!Array.isArray(data)) throw new Error("data.json 应为数组");
+          state.items = data.map(function (item) {
+            var searchable = ITEM_FIELDS
+              .map(function (key) { return valueOf(item, key, ""); })
+              .join(" ");
+            item.__search = searchable.toLowerCase();
+            return item;
+          });
+          render();
+        })
+        .catch(function (error) {
+          console.error("数据加载失败:", error);
+          statusEl.textContent = "数据加载失败，请确认 data.json 与本页面在同一目录。";
+          emptyEl.hidden = false;
+          emptyEl.innerHTML =
+            '<p class="empty-title">数据加载失败</p>' +
+            '<p class="empty-hint">无法读取 data.json，请刷新页面重试。</p>';
+        });
+    })();
+  </script>
+</body>
+</html>
