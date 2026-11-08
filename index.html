@@ -169,6 +169,121 @@
       color: #1a1408;
     }
 
+    /* ---------- 特性筛选 ---------- */
+    .trait-panel {
+      margin-bottom: 12px;
+      padding: 11px 12px 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .trait-panel-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 9px;
+    }
+
+    .trait-panel-title {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.09em;
+    }
+
+    .trait-selected {
+      font-size: 11.5px;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+    }
+
+    .trait-clear {
+      padding: 4px 2px;
+      border: 0;
+      background: none;
+      color: #6f7887;
+      font-size: 11.5px;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .trait-toggle {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+      padding: 6px 2px;
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font-size: 11.5px;
+      font-family: inherit;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .trait-toggle svg {
+      width: 12px;
+      height: 12px;
+      transition: transform 0.15s ease;
+    }
+
+    .trait-toggle[aria-expanded="true"] svg {
+      transform: rotate(180deg);
+    }
+
+    .trait-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .trait-cloud.is-collapsed {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -webkit-mask-image: linear-gradient(to right, #000 0, #000 88%, transparent 100%);
+      mask-image: linear-gradient(to right, #000 0, #000 88%, transparent 100%);
+    }
+
+    .trait-cloud.is-collapsed::-webkit-scrollbar { display: none; }
+
+    .filter-trait {
+      flex: none;
+      height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 12.5px;
+      font-family: inherit;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .filter-trait:active { transform: scale(0.97); }
+
+    .filter-trait[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #1a1408;
+      font-weight: 600;
+    }
+
+    .filter-trait.is-query-match:not([aria-pressed="true"]) {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(240, 184, 92, 0.25) inset;
+    }
+
     /* ---------- 结果区 ---------- */
     main {
       max-width: 720px;
@@ -186,6 +301,10 @@
     .status strong {
       color: var(--accent);
       font-weight: 600;
+    }
+
+    .status .hint {
+      color: var(--accent);
     }
 
     .cards {
@@ -301,12 +420,25 @@
     .trait {
       padding: 1px 8px;
       border-radius: 5px;
-      background: var(--accent-soft);
-      color: #f3cf96;
+      background: var(--tag-bg, var(--accent-soft));
+      border: 1px solid var(--tag-border, rgba(240, 184, 92, 0.32));
+      color: var(--tag, #f3cf96);
       font-size: 12.5px;
       line-height: 1.6;
       font-weight: 500;
+      white-space: nowrap;
     }
+
+    .trait.c0 { --tag: #8ab4ff; --tag-bg: rgba(138, 180, 255, 0.13); --tag-border: rgba(138, 180, 255, 0.36); }
+    .trait.c1 { --tag: #7fd8bd; --tag-bg: rgba(127, 216, 189, 0.13); --tag-border: rgba(127, 216, 189, 0.36); }
+    .trait.c2 { --tag: #f0c674; --tag-bg: rgba(240, 198, 116, 0.13); --tag-border: rgba(240, 198, 116, 0.36); }
+    .trait.c3 { --tag: #f59b6b; --tag-bg: rgba(245, 155, 107, 0.13); --tag-border: rgba(245, 155, 107, 0.36); }
+    .trait.c4 { --tag: #e78ab6; --tag-bg: rgba(231, 138, 182, 0.13); --tag-border: rgba(231, 138, 182, 0.36); }
+    .trait.c5 { --tag: #b79cff; --tag-bg: rgba(183, 156, 255, 0.13); --tag-border: rgba(183, 156, 255, 0.36); }
+    .trait.c6 { --tag: #a3d977; --tag-bg: rgba(163, 217, 119, 0.13); --tag-border: rgba(163, 217, 119, 0.36); }
+    .trait.c7 { --tag: #6fd0e8; --tag-bg: rgba(111, 208, 232, 0.13); --tag-border: rgba(111, 208, 232, 0.36); }
+    .trait.c8 { --tag: #c3a6f7; --tag-bg: rgba(195, 166, 247, 0.13); --tag-border: rgba(195, 166, 247, 0.36); }
+    .trait.c9 { --tag: #eb9f9f; --tag-bg: rgba(235, 159, 159, 0.13); --tag-border: rgba(235, 159, 159, 0.36); }
 
     .notes {
       margin-top: 11px;
@@ -421,11 +553,26 @@
   </header>
 
   <main>
+    <section class="trait-panel" id="traitPanel" aria-labelledby="traitPanelTitle" hidden>
+      <div class="trait-panel-head">
+        <span class="trait-panel-title" id="traitPanelTitle">特性筛选</span>
+        <span class="trait-selected" id="traitSelected" hidden></span>
+        <button class="trait-clear" id="traitClear" type="button" hidden>清除</button>
+        <button class="trait-toggle" id="traitToggle" type="button" aria-expanded="false" aria-controls="traitCloud">
+          <span id="traitToggleText">展开全部</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M6 9l6 6 6-6"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="trait-cloud is-collapsed" id="traitCloud" role="group" aria-label="特性快捷筛选"></div>
+    </section>
+
     <div class="status" id="status" role="status" aria-live="polite">正在加载数据…</div>
     <div class="cards" id="list"></div>
     <div class="empty" id="empty" hidden>
       <p class="empty-title">未找到匹配内容</p>
-      <p class="empty-hint">试试其他关键词（如 <kbd>乌萨斯</kbd>、<kbd>技力</kbd>），或切换阶数筛选。</p>
+      <p class="empty-hint">试试其他关键词（如 <kbd>乌萨斯</kbd>、<kbd>技力</kbd>），或取消阶数 / 特性筛选。</p>
     </div>
     <noscript>
       <div class="empty">
@@ -452,7 +599,8 @@
       var state = {
         items: [],
         query: "",
-        tier: ""
+        tier: "",
+        traits: []
       };
 
       var searchEl = document.getElementById("search");
@@ -460,6 +608,15 @@
       var listEl = document.getElementById("list");
       var emptyEl = document.getElementById("empty");
       var statusEl = document.getElementById("status");
+      var traitPanelEl = document.getElementById("traitPanel");
+      var traitCloudEl = document.getElementById("traitCloud");
+      var traitSelectedEl = document.getElementById("traitSelected");
+      var traitClearEl = document.getElementById("traitClear");
+      var traitToggleEl = document.getElementById("traitToggle");
+      var traitToggleTextEl = document.getElementById("traitToggleText");
+
+      var traitTerms = [];
+      var traitExpanded = false;
 
       function escapeHtml(value) {
         return String(value)
@@ -481,6 +638,33 @@
         return safe ? "tier--" + safe : "";
       }
 
+      function splitTraits(raw) {
+        return String(raw || "")
+          .split("/")
+          .map(function (term) { return term.trim(); })
+          .filter(Boolean);
+      }
+
+      function hashString(str) {
+        var hash = 0;
+        for (var i = 0; i < str.length; i++) {
+          hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+        }
+        return Math.abs(hash);
+      }
+
+      function traitColorClass(term) {
+        return "c" + (hashString(term) % 10);
+      }
+
+      function getExactTrait(query) {
+        if (!query) return null;
+        for (var i = 0; i < traitTerms.length; i++) {
+          if (traitTerms[i].toLowerCase() === query) return traitTerms[i];
+        }
+        return null;
+      }
+
       function cardHtml(item) {
         var name = escapeHtml(valueOf(item, "干员名称", "未知干员"));
         var tier = valueOf(item, "阶数", "—");
@@ -489,11 +673,10 @@
         var normalNote = escapeHtml(valueOf(item, "特殊说明（普通）", "—"));
         var eliteNote = escapeHtml(valueOf(item, "特殊说明（精锐）", "—"));
 
-        var traits = String(valueOf(item, "特性", ""))
-          .split("/")
-          .map(function (t) { return t.trim(); })
-          .filter(Boolean)
-          .map(function (t) { return '<span class="trait">' + escapeHtml(t) + "</span>"; })
+        var traits = splitTraits(valueOf(item, "特性", ""))
+          .map(function (t) {
+            return '<span class="trait ' + traitColorClass(t) + '">' + escapeHtml(t) + "</span>";
+          })
           .join("");
 
         if (!traits) traits = '<span class="trait">—</span>';
@@ -527,23 +710,62 @@
         );
       }
 
+      function syncTraitChips() {
+        var matchTerm = getExactTrait(state.query);
+        Array.prototype.forEach.call(traitCloudEl.querySelectorAll(".filter-trait"), function (btn) {
+          var term = btn.getAttribute("data-trait");
+          btn.setAttribute("aria-pressed", state.traits.indexOf(term) === -1 ? "false" : "true");
+          btn.classList.toggle("is-query-match", term === matchTerm);
+        });
+        var count = state.traits.length;
+        traitSelectedEl.hidden = count === 0;
+        traitSelectedEl.textContent = "已选 " + count;
+        traitClearEl.hidden = count === 0;
+      }
+
       function render() {
         var query = state.query;
         var tier = state.tier;
+        var selectedTraits = state.traits;
+
         var matched = state.items.filter(function (item) {
           if (tier && valueOf(item, "阶数", "") !== tier) return false;
-          if (!query) return true;
-          return item.__search.indexOf(query) !== -1;
+          if (query && item.__search.indexOf(query) === -1) return false;
+          for (var i = 0; i < selectedTraits.length; i++) {
+            if (item.__traits.indexOf(selectedTraits[i]) === -1) return false;
+          }
+          return true;
         });
 
         listEl.innerHTML = matched.map(cardHtml).join("");
         emptyEl.hidden = matched.length > 0;
         listEl.hidden = matched.length === 0;
 
-        var scopeText = query || tier ? "找到" : "共";
-        statusEl.innerHTML =
-          scopeText + " <strong>" + matched.length + "</strong> 名干员" +
-          (tier ? "（" + escapeHtml(tier) + " 阶）" : "");
+        var filterBits = [];
+        if (tier) filterBits.push(escapeHtml(tier) + " 阶");
+        if (selectedTraits.length) filterBits.push(escapeHtml(selectedTraits.join(" + ")));
+
+        var statusHtml =
+          (query || filterBits.length ? "找到" : "共") +
+          " <strong>" + matched.length + "</strong> 名干员";
+        if (filterBits.length) statusHtml += " · " + filterBits.join(" / ");
+
+        var exactTrait = getExactTrait(query);
+        if (exactTrait && selectedTraits.indexOf(exactTrait) === -1) {
+          statusHtml += ' · 命中特性<span class="hint">「' + escapeHtml(exactTrait) + "」</span>";
+        }
+
+        statusEl.innerHTML = statusHtml;
+      }
+
+      function buildTraitCloud() {
+        traitCloudEl.innerHTML = traitTerms
+          .map(function (term) {
+            return '<button class="filter-trait" type="button" data-trait="' +
+              escapeHtml(term) + '" aria-pressed="false">' + escapeHtml(term) + "</button>";
+          })
+          .join("");
+        traitToggleTextEl.textContent = "展开全部（" + traitTerms.length + "）";
       }
 
       function setTier(tier) {
@@ -554,8 +776,20 @@
         render();
       }
 
+      function toggleTrait(term) {
+        var index = state.traits.indexOf(term);
+        if (index === -1) {
+          state.traits.push(term);
+        } else {
+          state.traits.splice(index, 1);
+        }
+        syncTraitChips();
+        render();
+      }
+
       searchEl.addEventListener("input", function (event) {
         state.query = String(event.target.value || "").trim().toLowerCase();
+        syncTraitChips();
         render();
       });
 
@@ -566,6 +800,27 @@
         setTier(tier === state.tier ? "" : tier);
       });
 
+      traitCloudEl.addEventListener("click", function (event) {
+        var btn = event.target.closest(".filter-trait");
+        if (!btn) return;
+        toggleTrait(btn.getAttribute("data-trait"));
+      });
+
+      traitClearEl.addEventListener("click", function () {
+        state.traits = [];
+        syncTraitChips();
+        render();
+      });
+
+      traitToggleEl.addEventListener("click", function () {
+        traitExpanded = !traitExpanded;
+        traitCloudEl.classList.toggle("is-collapsed", !traitExpanded);
+        traitToggleEl.setAttribute("aria-expanded", traitExpanded ? "true" : "false");
+        traitToggleTextEl.textContent = traitExpanded
+          ? "收起"
+          : "展开全部（" + traitTerms.length + "）";
+      });
+
       fetch("./data.json")
         .then(function (response) {
           if (!response.ok) throw new Error("HTTP " + response.status);
@@ -573,13 +828,29 @@
         })
         .then(function (data) {
           if (!Array.isArray(data)) throw new Error("data.json 应为数组");
+
+          var traitCounts = Object.create(null);
+
           state.items = data.map(function (item) {
+            item.__traits = splitTraits(valueOf(item, "特性", ""));
+            item.__traits.forEach(function (term) {
+              traitCounts[term] = (traitCounts[term] || 0) + 1;
+            });
+
             var searchable = ITEM_FIELDS
               .map(function (key) { return valueOf(item, key, ""); })
               .join(" ");
             item.__search = searchable.toLowerCase();
             return item;
           });
+
+          traitTerms = Object.keys(traitCounts).sort(function (a, b) {
+            return (traitCounts[b] - traitCounts[a]) || a.localeCompare(b, "zh-CN");
+          });
+
+          buildTraitCloud();
+          traitPanelEl.hidden = false;
+          syncTraitChips();
           render();
         })
         .catch(function (error) {
