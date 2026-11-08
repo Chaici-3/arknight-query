@@ -83,7 +83,7 @@
     /* ---------- Tab 切换 ---------- */
     .tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 4px;
       margin-bottom: 10px;
       padding: 4px;
@@ -612,6 +612,107 @@
       word-break: break-word;
     }
 
+    /* ---------- 道具卡片 ---------- */
+    .item-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 15px;
+    }
+
+    .item-top {
+      display: flex;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .item-name {
+      flex: 1 1 150px;
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.3;
+      letter-spacing: 0.02em;
+      word-break: break-word;
+    }
+
+    .item-prices {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 5px;
+      flex: none;
+      margin-left: auto;
+    }
+
+    .item-price {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border: 1px solid rgba(240, 184, 92, 0.35);
+      border-radius: 6px;
+      background: rgba(240, 184, 92, 0.1);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.6;
+      white-space: nowrap;
+    }
+
+    .item-price svg {
+      width: 12px;
+      height: 12px;
+      flex: none;
+    }
+
+    .item-effects {
+      display: grid;
+      gap: 8px;
+      margin-top: 11px;
+    }
+
+    .item-effect {
+      padding: 9px 11px;
+      border-radius: 8px;
+      border-left: 3px solid transparent;
+    }
+
+    .item-effect--normal {
+      background: rgba(138, 180, 255, 0.07);
+      border-left-color: rgba(138, 180, 255, 0.55);
+    }
+
+    .item-effect--elite {
+      background: rgba(240, 184, 92, 0.08);
+      border-left-color: rgba(240, 184, 92, 0.6);
+    }
+
+    .effect-label {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+    }
+
+    .item-effect--normal .effect-label {
+      color: #8ab4ff;
+    }
+
+    .item-effect--elite .effect-label {
+      color: #d9b477;
+    }
+
+    .effect-text {
+      margin: 0;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: #c2cad6;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
     /* ---------- 空状态 ---------- */
     .empty {
       text-align: center;
@@ -657,6 +758,7 @@
       <nav class="tabs" id="tabs" role="tablist" aria-label="查询类型">
         <button class="tab" id="tabOperators" type="button" role="tab" data-tab="operators" aria-selected="true" aria-controls="operatorPanel">干员查询</button>
         <button class="tab" id="tabStrategies" type="button" role="tab" data-tab="strategies" aria-selected="false" aria-controls="strategyPanel">策略查询</button>
+        <button class="tab" id="tabItems" type="button" role="tab" data-tab="items" aria-selected="false" aria-controls="itemsPanel">道具查询</button>
       </nav>
 
       <div class="search-wrap">
@@ -723,10 +825,19 @@
       </div>
     </section>
 
+    <section id="itemsPanel" role="tabpanel" aria-labelledby="tabItems" hidden>
+      <div class="status" id="itemsStatus" role="status" aria-live="polite">正在加载道具数据…</div>
+      <div class="cards" id="itemsList"></div>
+      <div class="empty" id="itemsEmpty" hidden>
+        <p class="empty-title">未找到匹配内容</p>
+        <p class="empty-hint">试试其他关键词（如 <kbd>重锤</kbd>、<kbd>攻击力</kbd>），或检查输入的售价。</p>
+      </div>
+    </section>
+
     <noscript>
       <div class="empty">
         <p class="empty-title">需要启用 JavaScript</p>
-        <p class="empty-hint">本页面依赖 JavaScript 读取 data.json 与 strategies.json 并展示数据。</p>
+        <p class="empty-hint">本页面依赖 JavaScript 读取 data.json、strategies.json 与 items.json 并展示数据。</p>
       </div>
     </noscript>
   </main>
@@ -748,7 +859,8 @@
       var state = {
         tab: "operators",
         op: { items: [], query: "", tier: "", traits: [], loaded: false, error: false },
-        str: { items: [], query: "", loaded: false, error: false, open: [] }
+        str: { items: [], query: "", loaded: false, error: false, open: [] },
+        item: { items: [], query: "", loaded: false, error: false }
       };
 
       var searchEl = document.getElementById("search");
@@ -765,11 +877,16 @@
       var tabsEl = document.getElementById("tabs");
       var tabOperatorsEl = document.getElementById("tabOperators");
       var tabStrategiesEl = document.getElementById("tabStrategies");
+      var tabItemsEl = document.getElementById("tabItems");
       var operatorPanelEl = document.getElementById("operatorPanel");
       var strategyPanelEl = document.getElementById("strategyPanel");
       var strategyListEl = document.getElementById("strategyList");
       var strategyStatusEl = document.getElementById("strategyStatus");
       var strategyEmptyEl = document.getElementById("strategyEmpty");
+      var itemsPanelEl = document.getElementById("itemsPanel");
+      var itemsListEl = document.getElementById("itemsList");
+      var itemsStatusEl = document.getElementById("itemsStatus");
+      var itemsEmptyEl = document.getElementById("itemsEmpty");
 
       var traitTerms = [];
       var traitExpanded = false;
@@ -996,38 +1113,123 @@
           (matched.length ? " · 点击条目查看完整描述" : "");
       }
 
+      function itemHtml(item) {
+        var name = escapeHtml(valueOf(item, "道具名称", "未命名道具"));
+        var normalEffect = escapeHtml(valueOf(item, "普通效果", "—"));
+        var eliteEffect = escapeHtml(valueOf(item, "精锐效果", "—"));
+        var normalPrice = escapeHtml(valueOf(item, "普通售价", "—"));
+        var elitePrice = escapeHtml(valueOf(item, "精锐售价", "—"));
+
+        var coinIcon =
+          '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+            '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"></circle>' +
+            '<circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.4"></circle>' +
+          "</svg>";
+
+        return (
+          '<article class="item-card">' +
+            '<div class="item-top">' +
+              '<h2 class="item-name">' + name + "</h2>" +
+              '<div class="item-prices">' +
+                '<span class="item-price" title="普通售价">' + coinIcon + "普通 " + normalPrice + "</span>" +
+                '<span class="item-price" title="精锐售价">' + coinIcon + "精锐 " + elitePrice + "</span>" +
+              "</div>" +
+            "</div>" +
+            '<div class="item-effects">' +
+              '<div class="item-effect item-effect--normal">' +
+                '<span class="effect-label">普通效果</span>' +
+                '<p class="effect-text">' + normalEffect + "</p>" +
+              "</div>" +
+              '<div class="item-effect item-effect--elite">' +
+                '<span class="effect-label">精锐效果</span>' +
+                '<p class="effect-text">' + eliteEffect + "</p>" +
+              "</div>" +
+            "</div>" +
+          "</article>"
+        );
+      }
+
+      function renderItems() {
+        var itemState = state.item;
+
+        if (!itemState.loaded) {
+          itemsListEl.innerHTML = "";
+          itemsListEl.hidden = true;
+          if (itemState.error) {
+            itemsStatusEl.textContent = "道具数据加载失败，请确认 items.json 与本页面在同一目录。";
+            itemsEmptyEl.hidden = false;
+            itemsEmptyEl.innerHTML =
+              '<p class="empty-title">数据加载失败</p>' +
+              '<p class="empty-hint">无法读取 items.json，请刷新页面重试。</p>';
+          } else {
+            itemsStatusEl.textContent = "正在加载道具数据…";
+            itemsEmptyEl.hidden = true;
+          }
+          return;
+        }
+
+        var query = normalizeQuery(itemState.query);
+        var matched = itemState.items.filter(function (item) {
+          return !query || item.__search.indexOf(query) !== -1;
+        });
+
+        itemsListEl.innerHTML = matched.map(itemHtml).join("");
+        itemsEmptyEl.hidden = matched.length > 0;
+        itemsListEl.hidden = matched.length === 0;
+
+        itemsStatusEl.innerHTML =
+          (query ? "找到" : "共") + " <strong>" + matched.length + "</strong> 件道具";
+      }
+
       function render() {
         if (state.tab === "operators") {
           renderOperators();
-        } else {
+        } else if (state.tab === "strategies") {
           renderStrategies();
+        } else {
+          renderItems();
         }
       }
 
       function setTab(tab) {
-        if (tab !== "operators" && tab !== "strategies") return;
+        if (tab !== "operators" && tab !== "strategies" && tab !== "items") return;
         if (state.tab === tab) return;
         state.tab = tab;
+
         var isOperators = tab === "operators";
+        var isStrategies = tab === "strategies";
+        var isItems = tab === "items";
 
         tabOperatorsEl.setAttribute("aria-selected", isOperators ? "true" : "false");
-        tabStrategiesEl.setAttribute("aria-selected", isOperators ? "false" : "true");
+        tabStrategiesEl.setAttribute("aria-selected", isStrategies ? "true" : "false");
+        tabItemsEl.setAttribute("aria-selected", isItems ? "true" : "false");
+
         operatorPanelEl.hidden = !isOperators;
-        strategyPanelEl.hidden = isOperators;
+        strategyPanelEl.hidden = !isStrategies;
+        itemsPanelEl.hidden = !isItems;
         filtersEl.hidden = !isOperators;
 
-        searchEl.value = isOperators ? state.op.query : state.str.query;
-        searchEl.placeholder = isOperators
-          ? "搜索干员 / 特性 / 说明 / 售价…"
-          : "搜索策略名称 / 描述…";
-        searchEl.setAttribute("aria-label", isOperators ? "搜索干员数据" : "搜索策略数据");
+        var current = isOperators ? state.op : isStrategies ? state.str : state.item;
+        searchEl.value = current.query;
 
-        if (isOperators) syncTraitChips();
+        if (isOperators) {
+          searchEl.placeholder = "搜索干员 / 特性 / 说明 / 售价…";
+          searchEl.setAttribute("aria-label", "搜索干员数据");
+          syncTraitChips();
+        } else if (isStrategies) {
+          searchEl.placeholder = "搜索策略名称 / 描述…";
+          searchEl.setAttribute("aria-label", "搜索策略数据");
+        } else {
+          searchEl.placeholder = "搜索道具名称 / 效果 / 售价…";
+          searchEl.setAttribute("aria-label", "搜索道具数据");
+        }
+
         render();
 
         operatorPanelEl.classList.remove("panel-enter");
         strategyPanelEl.classList.remove("panel-enter");
-        var activePanel = isOperators ? operatorPanelEl : strategyPanelEl;
+        itemsPanelEl.classList.remove("panel-enter");
+        var activePanel = isOperators ? operatorPanelEl : isStrategies ? strategyPanelEl : itemsPanelEl;
         void activePanel.offsetWidth;
         activePanel.classList.add("panel-enter");
       }
@@ -1067,9 +1269,12 @@
           state.op.query = value;
           syncTraitChips();
           renderOperators();
-        } else {
+        } else if (state.tab === "strategies") {
           state.str.query = value;
           renderStrategies();
+        } else {
+          state.item.query = value;
+          renderItems();
         }
       });
 
@@ -1194,6 +1399,28 @@
           console.error("策略数据加载失败:", error);
           state.str.error = true;
           renderStrategies();
+        });
+
+      loadJson("./items.json")
+        .then(function (data) {
+          if (!Array.isArray(data)) throw new Error("items.json 应为数组");
+
+          state.item.items = data.map(function (item) {
+            item.__search = Object.keys(item)
+              .filter(function (key) { return key.indexOf("__") !== 0; })
+              .map(function (key) { return valueOf(item, key, ""); })
+              .join(" ")
+              .toLowerCase();
+            return item;
+          });
+
+          state.item.loaded = true;
+          renderItems();
+        })
+        .catch(function (error) {
+          console.error("道具数据加载失败:", error);
+          state.item.error = true;
+          renderItems();
         });
     })();
   </script>
