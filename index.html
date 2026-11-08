@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0e1014">
-  <title>卫戍协议 · 干员查询</title>
+  <title>卫戍协议 · 数据查询</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%230e1014'/%3E%3Cpath d='M25 72V28h12l26 28V28' stroke='%23f0b85c' stroke-width='8' fill='none'/%3E%3C/svg%3E">
   <style>
     :root {
@@ -78,6 +78,49 @@
       font-weight: 500;
       letter-spacing: 0.14em;
       color: var(--muted);
+    }
+
+    /* ---------- Tab 切换 ---------- */
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      margin-bottom: 10px;
+      padding: 4px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .tab {
+      height: 42px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .tab:active { transform: scale(0.98); }
+
+    .tab[aria-selected="true"] {
+      background: var(--accent);
+      color: #1a1408;
+    }
+
+    @keyframes panel-fade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-enter {
+      animation: panel-fade 0.18s ease both;
     }
 
     /* ---------- 搜索框 ---------- */
@@ -480,6 +523,95 @@
       word-break: break-word;
     }
 
+    /* ---------- 策略折叠列表 ---------- */
+    .strategy-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .strategy {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+
+    .strategy.is-open {
+      border-color: #3c4656;
+    }
+
+    .strategy-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 58px;
+      padding: 13px 15px;
+      border: 0;
+      background: none;
+      color: var(--text);
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .strategy-name {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.35;
+      letter-spacing: 0.02em;
+      word-break: break-word;
+    }
+
+    .strategy-action {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: auto;
+      flex: none;
+      color: var(--muted);
+      font-size: 11.5px;
+      letter-spacing: 0.04em;
+    }
+
+    .strategy-chevron {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s ease;
+    }
+
+    .strategy.is-open .strategy-chevron {
+      transform: rotate(180deg);
+    }
+
+    .strategy-body {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.25s ease;
+    }
+
+    .strategy.is-open .strategy-body {
+      grid-template-rows: 1fr;
+    }
+
+    .strategy-body-inner {
+      overflow: hidden;
+    }
+
+    .strategy-desc {
+      margin: 0;
+      padding: 12px 15px 16px;
+      border-top: 1px solid var(--line);
+      font-size: 14px;
+      line-height: 1.85;
+      color: #c2cad6;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
     /* ---------- 空状态 ---------- */
     .empty {
       text-align: center;
@@ -513,14 +645,19 @@
     [hidden] { display: none !important; }
 
     @media (prefers-reduced-motion: reduce) {
-      * { transition: none !important; }
+      * { transition: none !important; animation: none !important; }
     }
   </style>
 </head>
 <body>
   <header class="app-header">
     <div class="header-inner">
-      <div class="brand">卫戍协议 · 干员查询<span class="brand-sub">明日方舟</span></div>
+      <div class="brand">卫戍协议 · 数据查询<span class="brand-sub">明日方舟</span></div>
+
+      <nav class="tabs" id="tabs" role="tablist" aria-label="查询类型">
+        <button class="tab" id="tabOperators" type="button" role="tab" data-tab="operators" aria-selected="true" aria-controls="operatorPanel">干员查询</button>
+        <button class="tab" id="tabStrategies" type="button" role="tab" data-tab="strategies" aria-selected="false" aria-controls="strategyPanel">策略查询</button>
+      </nav>
 
       <div class="search-wrap">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -553,31 +690,43 @@
   </header>
 
   <main>
-    <section class="trait-panel" id="traitPanel" aria-labelledby="traitPanelTitle" hidden>
-      <div class="trait-panel-head">
-        <span class="trait-panel-title" id="traitPanelTitle">特性筛选</span>
-        <span class="trait-selected" id="traitSelected" hidden></span>
-        <button class="trait-clear" id="traitClear" type="button" hidden>清除</button>
-        <button class="trait-toggle" id="traitToggle" type="button" aria-expanded="false" aria-controls="traitCloud">
-          <span id="traitToggleText">展开全部</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-            <path d="M6 9l6 6 6-6"></path>
-          </svg>
-        </button>
+    <section id="operatorPanel" role="tabpanel" aria-labelledby="tabOperators">
+      <section class="trait-panel" id="traitPanel" aria-labelledby="traitPanelTitle" hidden>
+        <div class="trait-panel-head">
+          <span class="trait-panel-title" id="traitPanelTitle">特性筛选</span>
+          <span class="trait-selected" id="traitSelected" hidden></span>
+          <button class="trait-clear" id="traitClear" type="button" hidden>清除</button>
+          <button class="trait-toggle" id="traitToggle" type="button" aria-expanded="false" aria-controls="traitCloud">
+            <span id="traitToggleText">展开全部</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="trait-cloud is-collapsed" id="traitCloud" role="group" aria-label="特性快捷筛选"></div>
+      </section>
+
+      <div class="status" id="status" role="status" aria-live="polite">正在加载干员数据…</div>
+      <div class="cards" id="list"></div>
+      <div class="empty" id="empty" hidden>
+        <p class="empty-title">未找到匹配内容</p>
+        <p class="empty-hint">试试其他关键词（如 <kbd>乌萨斯</kbd>、<kbd>技力</kbd>），或取消阶数 / 特性筛选。</p>
       </div>
-      <div class="trait-cloud is-collapsed" id="traitCloud" role="group" aria-label="特性快捷筛选"></div>
     </section>
 
-    <div class="status" id="status" role="status" aria-live="polite">正在加载数据…</div>
-    <div class="cards" id="list"></div>
-    <div class="empty" id="empty" hidden>
-      <p class="empty-title">未找到匹配内容</p>
-      <p class="empty-hint">试试其他关键词（如 <kbd>乌萨斯</kbd>、<kbd>技力</kbd>），或取消阶数 / 特性筛选。</p>
-    </div>
+    <section id="strategyPanel" role="tabpanel" aria-labelledby="tabStrategies" hidden>
+      <div class="status" id="strategyStatus" role="status" aria-live="polite">正在加载策略数据…</div>
+      <div class="strategy-list" id="strategyList"></div>
+      <div class="empty" id="strategyEmpty" hidden>
+        <p class="empty-title">未找到匹配内容</p>
+        <p class="empty-hint">试试其他关键词，例如 <kbd>炎</kbd>、<kbd>谢拉格</kbd>。</p>
+      </div>
+    </section>
+
     <noscript>
       <div class="empty">
         <p class="empty-title">需要启用 JavaScript</p>
-        <p class="empty-hint">本页面依赖 JavaScript 读取 data.json 并展示数据。</p>
+        <p class="empty-hint">本页面依赖 JavaScript 读取 data.json 与 strategies.json 并展示数据。</p>
       </div>
     </noscript>
   </main>
@@ -597,10 +746,9 @@
       ];
 
       var state = {
-        items: [],
-        query: "",
-        tier: "",
-        traits: []
+        tab: "operators",
+        op: { items: [], query: "", tier: "", traits: [], loaded: false, error: false },
+        str: { items: [], query: "", loaded: false, error: false, open: [] }
       };
 
       var searchEl = document.getElementById("search");
@@ -614,6 +762,14 @@
       var traitClearEl = document.getElementById("traitClear");
       var traitToggleEl = document.getElementById("traitToggle");
       var traitToggleTextEl = document.getElementById("traitToggleText");
+      var tabsEl = document.getElementById("tabs");
+      var tabOperatorsEl = document.getElementById("tabOperators");
+      var tabStrategiesEl = document.getElementById("tabStrategies");
+      var operatorPanelEl = document.getElementById("operatorPanel");
+      var strategyPanelEl = document.getElementById("strategyPanel");
+      var strategyListEl = document.getElementById("strategyList");
+      var strategyStatusEl = document.getElementById("strategyStatus");
+      var strategyEmptyEl = document.getElementById("strategyEmpty");
 
       var traitTerms = [];
       var traitExpanded = false;
@@ -631,6 +787,10 @@
         var value = item[key];
         if (value === undefined || value === null || value === "") return fallback;
         return String(value);
+      }
+
+      function normalizeQuery(query) {
+        return String(query || "").trim().toLowerCase();
       }
 
       function tierClass(tier) {
@@ -711,25 +871,42 @@
       }
 
       function syncTraitChips() {
-        var matchTerm = getExactTrait(state.query);
+        var matchTerm = getExactTrait(normalizeQuery(state.op.query));
         Array.prototype.forEach.call(traitCloudEl.querySelectorAll(".filter-trait"), function (btn) {
           var term = btn.getAttribute("data-trait");
-          btn.setAttribute("aria-pressed", state.traits.indexOf(term) === -1 ? "false" : "true");
+          btn.setAttribute("aria-pressed", state.op.traits.indexOf(term) === -1 ? "false" : "true");
           btn.classList.toggle("is-query-match", term === matchTerm);
         });
-        var count = state.traits.length;
+        var count = state.op.traits.length;
         traitSelectedEl.hidden = count === 0;
         traitSelectedEl.textContent = "已选 " + count;
         traitClearEl.hidden = count === 0;
       }
 
-      function render() {
-        var query = state.query;
-        var tier = state.tier;
-        var selectedTraits = state.traits;
+      function renderOperators() {
+        var op = state.op;
 
-        var matched = state.items.filter(function (item) {
-          if (tier && valueOf(item, "阶数", "") !== tier) return false;
+        if (!op.loaded) {
+          listEl.innerHTML = "";
+          listEl.hidden = true;
+          if (op.error) {
+            statusEl.textContent = "干员数据加载失败，请确认 data.json 与本页面在同一目录。";
+            emptyEl.hidden = false;
+            emptyEl.innerHTML =
+              '<p class="empty-title">数据加载失败</p>' +
+              '<p class="empty-hint">无法读取 data.json，请刷新页面重试。</p>';
+          } else {
+            statusEl.textContent = "正在加载干员数据…";
+            emptyEl.hidden = true;
+          }
+          return;
+        }
+
+        var query = normalizeQuery(op.query);
+        var selectedTraits = op.traits;
+
+        var matched = op.items.filter(function (item) {
+          if (op.tier && valueOf(item, "阶数", "") !== op.tier) return false;
           if (query && item.__search.indexOf(query) === -1) return false;
           for (var i = 0; i < selectedTraits.length; i++) {
             if (item.__traits.indexOf(selectedTraits[i]) === -1) return false;
@@ -742,7 +919,7 @@
         listEl.hidden = matched.length === 0;
 
         var filterBits = [];
-        if (tier) filterBits.push(escapeHtml(tier) + " 阶");
+        if (op.tier) filterBits.push(escapeHtml(op.tier) + " 阶");
         if (selectedTraits.length) filterBits.push(escapeHtml(selectedTraits.join(" + ")));
 
         var statusHtml =
@@ -758,6 +935,103 @@
         statusEl.innerHTML = statusHtml;
       }
 
+      function strategyHtml(item) {
+        var id = item.__id;
+        var isOpen = state.str.open.indexOf(id) !== -1;
+        var name = escapeHtml(valueOf(item, "盟约名称", "未命名策略"));
+        var desc = escapeHtml(valueOf(item, "盟约描述", "暂无描述"));
+
+        return (
+          '<article class="strategy' + (isOpen ? " is-open" : "") + '" data-id="' + id + '">' +
+            '<button class="strategy-head" type="button" aria-expanded="' + (isOpen ? "true" : "false") +
+              '" aria-controls="strategyBody' + id + '">' +
+              '<span class="strategy-name">' + name + "</span>" +
+              '<span class="strategy-action">' +
+                '<span class="strategy-action-text">' + (isOpen ? "收起" : "展开") + "</span>" +
+                '<svg class="strategy-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+                  'stroke-width="2" stroke-linecap="round" aria-hidden="true">' +
+                  '<path d="M6 9l6 6 6-6"></path>' +
+                "</svg>" +
+              "</span>" +
+            "</button>" +
+            '<div class="strategy-body" id="strategyBody' + id + '">' +
+              '<div class="strategy-body-inner">' +
+                '<p class="strategy-desc">' + desc + "</p>" +
+              "</div>" +
+            "</div>" +
+          "</article>"
+        );
+      }
+
+      function renderStrategies() {
+        var str = state.str;
+
+        if (!str.loaded) {
+          strategyListEl.innerHTML = "";
+          strategyListEl.hidden = true;
+          if (str.error) {
+            strategyStatusEl.textContent = "策略数据加载失败，请确认 strategies.json 与本页面在同一目录。";
+            strategyEmptyEl.hidden = false;
+            strategyEmptyEl.innerHTML =
+              '<p class="empty-title">数据加载失败</p>' +
+              '<p class="empty-hint">无法读取 strategies.json，请刷新页面重试。</p>';
+          } else {
+            strategyStatusEl.textContent = "正在加载策略数据…";
+            strategyEmptyEl.hidden = true;
+          }
+          return;
+        }
+
+        var query = normalizeQuery(str.query);
+        var matched = str.items.filter(function (item) {
+          return !query || item.__search.indexOf(query) !== -1;
+        });
+
+        strategyListEl.innerHTML = matched.map(strategyHtml).join("");
+        strategyEmptyEl.hidden = matched.length > 0;
+        strategyListEl.hidden = matched.length === 0;
+
+        strategyStatusEl.innerHTML =
+          (query ? "找到" : "共") + " <strong>" + matched.length + "</strong> 条策略" +
+          (matched.length ? " · 点击条目查看完整描述" : "");
+      }
+
+      function render() {
+        if (state.tab === "operators") {
+          renderOperators();
+        } else {
+          renderStrategies();
+        }
+      }
+
+      function setTab(tab) {
+        if (tab !== "operators" && tab !== "strategies") return;
+        if (state.tab === tab) return;
+        state.tab = tab;
+        var isOperators = tab === "operators";
+
+        tabOperatorsEl.setAttribute("aria-selected", isOperators ? "true" : "false");
+        tabStrategiesEl.setAttribute("aria-selected", isOperators ? "false" : "true");
+        operatorPanelEl.hidden = !isOperators;
+        strategyPanelEl.hidden = isOperators;
+        filtersEl.hidden = !isOperators;
+
+        searchEl.value = isOperators ? state.op.query : state.str.query;
+        searchEl.placeholder = isOperators
+          ? "搜索干员 / 特性 / 说明 / 售价…"
+          : "搜索策略名称 / 描述…";
+        searchEl.setAttribute("aria-label", isOperators ? "搜索干员数据" : "搜索策略数据");
+
+        if (isOperators) syncTraitChips();
+        render();
+
+        operatorPanelEl.classList.remove("panel-enter");
+        strategyPanelEl.classList.remove("panel-enter");
+        var activePanel = isOperators ? operatorPanelEl : strategyPanelEl;
+        void activePanel.offsetWidth;
+        activePanel.classList.add("panel-enter");
+      }
+
       function buildTraitCloud() {
         traitCloudEl.innerHTML = traitTerms
           .map(function (term) {
@@ -769,35 +1043,47 @@
       }
 
       function setTier(tier) {
-        state.tier = tier;
+        state.op.tier = tier;
         Array.prototype.forEach.call(filtersEl.querySelectorAll(".filter"), function (btn) {
           btn.setAttribute("aria-pressed", btn.getAttribute("data-tier") === tier ? "true" : "false");
         });
-        render();
+        renderOperators();
       }
 
       function toggleTrait(term) {
-        var index = state.traits.indexOf(term);
+        var index = state.op.traits.indexOf(term);
         if (index === -1) {
-          state.traits.push(term);
+          state.op.traits.push(term);
         } else {
-          state.traits.splice(index, 1);
+          state.op.traits.splice(index, 1);
         }
         syncTraitChips();
-        render();
+        renderOperators();
       }
 
       searchEl.addEventListener("input", function (event) {
-        state.query = String(event.target.value || "").trim().toLowerCase();
-        syncTraitChips();
-        render();
+        var value = String(event.target.value || "");
+        if (state.tab === "operators") {
+          state.op.query = value;
+          syncTraitChips();
+          renderOperators();
+        } else {
+          state.str.query = value;
+          renderStrategies();
+        }
+      });
+
+      tabsEl.addEventListener("click", function (event) {
+        var btn = event.target.closest(".tab");
+        if (!btn) return;
+        setTab(btn.getAttribute("data-tab"));
       });
 
       filtersEl.addEventListener("click", function (event) {
         var btn = event.target.closest(".filter");
         if (!btn) return;
         var tier = btn.getAttribute("data-tier") || "";
-        setTier(tier === state.tier ? "" : tier);
+        setTier(tier === state.op.tier ? "" : tier);
       });
 
       traitCloudEl.addEventListener("click", function (event) {
@@ -807,9 +1093,9 @@
       });
 
       traitClearEl.addEventListener("click", function () {
-        state.traits = [];
+        state.op.traits = [];
         syncTraitChips();
-        render();
+        renderOperators();
       });
 
       traitToggleEl.addEventListener("click", function () {
@@ -821,17 +1107,44 @@
           : "展开全部（" + traitTerms.length + "）";
       });
 
-      fetch("./data.json")
-        .then(function (response) {
+      strategyListEl.addEventListener("click", function (event) {
+        var head = event.target.closest(".strategy-head");
+        if (!head) return;
+        var card = head.closest(".strategy");
+        if (!card) return;
+
+        var id = Number(card.getAttribute("data-id"));
+        var index = state.str.open.indexOf(id);
+        var isOpen;
+
+        if (index === -1) {
+          state.str.open.push(id);
+          isOpen = true;
+        } else {
+          state.str.open.splice(index, 1);
+          isOpen = false;
+        }
+
+        card.classList.toggle("is-open", isOpen);
+        head.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        var actionText = head.querySelector(".strategy-action-text");
+        if (actionText) actionText.textContent = isOpen ? "收起" : "展开";
+      });
+
+      function loadJson(path) {
+        return fetch(path).then(function (response) {
           if (!response.ok) throw new Error("HTTP " + response.status);
           return response.json();
-        })
+        });
+      }
+
+      loadJson("./data.json")
         .then(function (data) {
           if (!Array.isArray(data)) throw new Error("data.json 应为数组");
 
           var traitCounts = Object.create(null);
 
-          state.items = data.map(function (item) {
+          state.op.items = data.map(function (item) {
             item.__traits = splitTraits(valueOf(item, "特性", ""));
             item.__traits.forEach(function (term) {
               traitCounts[term] = (traitCounts[term] || 0) + 1;
@@ -848,18 +1161,39 @@
             return (traitCounts[b] - traitCounts[a]) || a.localeCompare(b, "zh-CN");
           });
 
+          state.op.loaded = true;
           buildTraitCloud();
           traitPanelEl.hidden = false;
           syncTraitChips();
-          render();
+          renderOperators();
         })
         .catch(function (error) {
-          console.error("数据加载失败:", error);
-          statusEl.textContent = "数据加载失败，请确认 data.json 与本页面在同一目录。";
-          emptyEl.hidden = false;
-          emptyEl.innerHTML =
-            '<p class="empty-title">数据加载失败</p>' +
-            '<p class="empty-hint">无法读取 data.json，请刷新页面重试。</p>';
+          console.error("干员数据加载失败:", error);
+          state.op.error = true;
+          renderOperators();
+        });
+
+      loadJson("./strategies.json")
+        .then(function (data) {
+          if (!Array.isArray(data)) throw new Error("strategies.json 应为数组");
+
+          state.str.items = data.map(function (item, index) {
+            item.__id = index;
+            item.__search = Object.keys(item)
+              .filter(function (key) { return key.indexOf("__") !== 0; })
+              .map(function (key) { return valueOf(item, key, ""); })
+              .join(" ")
+              .toLowerCase();
+            return item;
+          });
+
+          state.str.loaded = true;
+          renderStrategies();
+        })
+        .catch(function (error) {
+          console.error("策略数据加载失败:", error);
+          state.str.error = true;
+          renderStrategies();
         });
     })();
   </script>
